@@ -280,7 +280,7 @@
               
                 
                 <a class="post-title-link" href="/2017/05/25/test/" itemprop="url">
-                  test
+                  ActiveMQ的学习教程(一)
                 </a>
               
             
@@ -306,6 +306,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/学习/" itemprop="url" rel="index">
+                    <span itemprop="name">学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -334,8 +356,15 @@
       
         
           
-            <p>测试</p>
-
+            <h1 id="spring-和-ActiveMQ整合"><a href="#spring-和-ActiveMQ整合" class="headerlink" title="spring 和 ActiveMQ整合"></a>spring 和 ActiveMQ整合</h1><h2 id="生产者"><a href="#生产者" class="headerlink" title="生产者"></a>生产者</h2><h3 id="配置ActiveMQConnectionFactory"><a href="#配置ActiveMQConnectionFactory" class="headerlink" title="配置ActiveMQConnectionFactory"></a>配置ActiveMQConnectionFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">public static final String brokrnURL = &quot;tcp://localhost:61616&quot;;</div><div class="line">ActiveMQConnectionFactory targetConnectFactpry = new ActiveMQConnectionFactory(brokrnURL);</div></pre></td></tr></table></figure>
+<h3 id="配置PooledConnectionFactory"><a href="#配置PooledConnectionFactory" class="headerlink" title="配置PooledConnectionFactory"></a>配置PooledConnectionFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">PooledConnectionFactory pooledConnectionFactory = new PooledConnectionFactory();</div><div class="line">pooledConnectionFactory.setConnectionFactory(targetConnectFactpry);</div><div class="line">pooledConnectionFactory.setMaxConnections(10);</div></pre></td></tr></table></figure>
+<h3 id="配置SingleConnectionFactory"><a href="#配置SingleConnectionFactory" class="headerlink" title="配置SingleConnectionFactory"></a>配置SingleConnectionFactory</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SingleConnectionFactory connectionFactory = new SingleConnectionFactory(pooledConnectionFactory);</div></pre></td></tr></table></figure>
+<h3 id="配置JmsTemplate"><a href="#配置JmsTemplate" class="headerlink" title="配置JmsTemplate"></a>配置JmsTemplate</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">JmsTemplate jmsTemplate = new JmsTemplate(connectionFactory);</div><div class="line">ActiveMQQueue queue = new ActiveMQQueue(&quot;testQueue1&quot;);</div><div class="line">jmsTemplate.setDefaultDestination(queue);</div></pre></td></tr></table></figure>
+<h3 id="生产消息-发送消息到ActiveMQ中"><a href="#生产消息-发送消息到ActiveMQ中" class="headerlink" title="生产消息(发送消息到ActiveMQ中)"></a>生产消息(发送消息到ActiveMQ中)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jmsTemplate.convertAndSend(&quot;this ios init work : &quot; + random.nextInt());</div></pre></td></tr></table></figure>
+<h2 id="消费者"><a href="#消费者" class="headerlink" title="消费者"></a>消费者</h2><p>消费者打算在main方法中模拟，试了几次没有成功,最后还是使用了spring的xml方式</p>
+<h3 id="配置xml"><a href="#配置xml" class="headerlink" title="配置xml"></a>配置xml</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">&lt;!-- 1. 真正可以创建 Connection 的 ConnectionFactory，由对应的 JMS 服务厂商提供 --&gt;</div><div class="line">&lt;bean id=&quot;targetConnectionFactory&quot; class=&quot;org.apache.activemq.ActiveMQConnectionFactory&quot;&gt;</div><div class="line">    &lt;property name=&quot;brokerURL&quot; value=&quot;tcp://localhost:61616&quot;/&gt;</div><div class="line">&lt;/bean&gt;</div><div class="line">&lt;bean id=&quot;pooledConnectionFactory&quot; class=&quot;org.apache.activemq.pool.PooledConnectionFactory&quot;&gt;</div><div class="line">    &lt;property name=&quot;connectionFactory&quot; ref=&quot;targetConnectionFactory&quot;/&gt;</div><div class="line">    &lt;property name=&quot;maxConnections&quot; value=&quot;10&quot;/&gt;</div><div class="line">&lt;/bean&gt;</div><div class="line">&lt;bean id=&quot;connectionFactory&quot; class=&quot;org.springframework.jms.connection.SingleConnectionFactory&quot;&gt;</div><div class="line">    &lt;property name=&quot;targetConnectionFactory&quot; ref=&quot;pooledConnectionFactory&quot;/&gt;</div><div class="line">&lt;/bean&gt;</div><div class="line"></div><div class="line"></div><div class="line">&lt;!-- 2. 消息的消费者 --&gt;</div><div class="line">&lt;bean id=&quot;messageConsumer&quot; class=&quot;com.inga.util.TestComsumer&quot;/&gt;</div><div class="line"></div><div class="line">&lt;bean id=&quot;jmsContainer&quot; class=&quot;org.springframework.jms.listener.DefaultMessageListenerContainer&quot;&gt;</div><div class="line">    &lt;property name=&quot;connectionFactory&quot; ref=&quot;connectionFactory&quot;/&gt;</div><div class="line">    &lt;property name=&quot;messageListener&quot; ref=&quot;messageConsumer&quot;/&gt;</div><div class="line">    &lt;property name=&quot;destinationName&quot; value=&quot;testQueue1&quot;/&gt; &lt;!--队列名字--&gt;</div><div class="line">&lt;/bean&gt;</div></pre></td></tr></table></figure>
+<h3 id="配置MessageListener"><a href="#配置MessageListener" class="headerlink" title="配置MessageListener"></a>配置MessageListener</h3><p>需要实现配置MessageListener类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">public class TestComsumer implements MessageListener &#123;</div><div class="line"></div><div class="line">    public void onMessage(Message message) &#123;</div><div class="line"></div><div class="line">        if (message instanceof TextMessage)&#123;</div><div class="line">            TextMessage textMessage = (TextMessage) message;</div><div class="line">            try &#123;</div><div class="line">                String text = textMessage.getText();</div><div class="line">                System.out.println(text);</div><div class="line">            &#125;catch (JMSException e)&#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="消费者具体执行代码-使用了java运行spring"><a href="#消费者具体执行代码-使用了java运行spring" class="headerlink" title="消费者具体执行代码(使用了java运行spring)"></a>消费者具体执行代码(使用了java运行spring)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">public static void main(String[] args) &#123;</div><div class="line">    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(&quot;classpath:mq.xml&quot;);</div><div class="line">    context.start();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
           
         
       
@@ -544,7 +573,21 @@
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
           
 
         </nav>
